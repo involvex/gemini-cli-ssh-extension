@@ -10,7 +10,7 @@ To install this extension, run the following command:
 gemini extensions install https://github.com/involvex/gemini-cli-ssh-extension.git
 ```
 
-Replace `<your-username>` and `<your-repository-name>` with the actual username and repository name.
+
 
 ## Usage
 
