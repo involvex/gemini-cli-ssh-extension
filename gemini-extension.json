@@ -1,7 +1,7 @@
 {
   "name": "ssh",
-  "version": "1.0",
-  "description": "An extension to run SSH commands.",
+  "version": "2.1",
+  "description": "An extension to run remote SSH commands and transfer files using the Paramiko library.",
   "tools": [
     {
       "local_tool": {
@@ -11,16 +11,16 @@
       "function_declarations": [
         {
           "name": "ssh",
-          "description": "Executes an SSH command.",
+          "description": "Executes a command on a remote host.",
           "parameters": {
             "type": "OBJECT",
             "properties": {
-              "command": {
+              "args": {
                 "type": "STRING",
-                "description": "The SSH command to execute."
+                "description": "The SSH arguments in the format 'user@hostname \"command\"'."
               }
             },
-            "required": ["command"]
+            "required": ["args"]
           }
         }
       ]

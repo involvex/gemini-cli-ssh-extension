@@ -1,40 +1,38 @@
-# SSH Extension for Gemini CLI
+# SSH Extension for Gemini CLI (v2.1)
 
-A simple extension for the Gemini CLI that allows you to execute SSH commands.
+This extension provides a robust `/ssh` command for interacting with remote servers, enabling secure command execution directly from the Gemini CLI.
+
+It uses the `paramiko` Python library, ensuring reliable and secure connections.
+
+## Features
+
+-   **Simplified Command:** A single `/ssh` command for all remote execution.
+-   **Standard SSH Syntax:** Uses familiar `user@hostname "command"` syntax.
+-   **Secure Connections:** Leverages the `paramiko` library and your local SSH agent for authentication.
+-   **Detailed Output:** Returns `stdout`, `stderr`, and the `exit_code` for every command.
 
 ## Installation
 
-To install this extension from the local directory, run the following command from the `ssh-extension` directory:
-
-```bash
-gemini extensions install .
-```
-
-Alternatively, you can install it from GitHub:
-
-```bash
-gemini extensions install https://github.com/involvex/gemini-cli-ssh-extension.git
-```
-
-## SSH Key
-
-For passwordless authentication, ensure your SSH private key is added to the SSH agent. On Windows, you can do this with `ssh-add`. If your key is not in the default location (`~/.ssh/id_rsa`), you may need to specify the path to your private key.
-
-If you do not have an SSH key, you will be prompted for a password.
-
-
-
+1.  **Prerequisites:** Ensure you have Python and `pip` installed.
+2.  **Install Dependencies:** From within this extension's directory, run:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3.  **Install the Extension:** Run the following command from the extension's directory:
+    ```bash
+    gemini extensions install .
+    ```
+4.  **Restart Gemini CLI:** **This is a critical step.** Close and reopen the Gemini CLI to ensure the new `/ssh` command is registered.
 
 ## Usage
 
-This extension provides an `ssh` tool to execute remote commands.
+The extension provides a single `ssh` tool that can be used like a command.
 
 ### `ssh`
 
-Executes an SSH command.
+Executes a shell command on a remote host. The arguments should be a single string in the format `user@hostname "command"`.
 
-**Parameters:**
-
-*   `command` (string, required): The SSH command to execute, including the username and host.
-
-
+**Example:**
+```
+/ssh args='bitnami@63.178.255.78 "df -h"'
+```

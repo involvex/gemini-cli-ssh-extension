@@ -1,47 +1,80 @@
-import subprocess
+import os
 import sys
-import shlex
 import json
+import paramiko
+import shlex
 
-def ssh(command):
-  """Executes an SSH command."""
-  try:
-    # We need to handle the command carefully, especially on Windows.
-    # Use shlex to properly parse the command with quotes.
-    # Add default options for full access: disable host key checking and known hosts
-    import os
-    null_device = "NUL" if os.name == 'nt' else "/dev/null"
-    default_options = ["-o", "StrictHostKeyChecking=no", "-o", f"UserKnownHostsFile={null_device}"]
-    full_command = ["ssh"] + default_options + shlex.split(command)
-    process = subprocess.Popen(
-        full_command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    stdout, stderr = process.communicate()
-    if process.returncode != 0:
-      return {"error": stderr}
-    return {"output": stdout}
-  except Exception as e:
-    return {"error": f"An error occurred: {e}"}
+def _get_ssh_client(hostname, port, username, password=None, key_filename=None):
+    """Creates and connects an SSH client."""
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    # Environment variable fallbacks
+    key_filename = key_filename or os.getenv('SSH_KEY_PATH')
+    password = password or os.getenv('SSH_PASSWORD')
+    
+    try:
+        if key_filename:
+            key_path = os.path.expanduser(key_filename)
+            if not os.path.exists(key_path):
+                raise FileNotFoundError(f"SSH key file not found at {key_path}")
+            client.connect(hostname, port=port, username=username, key_filename=key_path)
+        elif password:
+            client.connect(hostname, port=port, username=username, password=password)
+        else:
+            client.connect(hostname, port=port, username=username, allow_agent=True, look_for_keys=True)
+        return client
+    except Exception as e:
+        raise ConnectionError(f"SSH connection failed: {e}")
+
+def execute_ssh_command(args):
+    """Parses ssh arguments and executes the command."""
+    try:
+        # A simple parser for 'user@host command'
+        parts = shlex.split(args)
+        
+        user_host = parts[0]
+        command = " ".join(parts[1:])
+
+        if '@' not in user_host:
+            raise ValueError("Invalid format. Expected 'user@hostname'.")
+
+        username, hostname = user_host.split('@', 1)
+        
+        port = int(os.getenv('SSH_PORT', 22))
+
+        client = _get_ssh_client(hostname, port, username)
+        
+        stdin, stdout, stderr = client.exec_command(command)
+        exit_code = stdout.channel.recv_exit_status()
+        output = stdout.read().decode('utf-8')
+        error = stderr.read().decode('utf-8')
+        client.close()
+        
+        return {
+            "exit_code": exit_code,
+            "stdout": output,
+            "stderr": error
+        }
+
+    except Exception as e:
+        return {"error": f"Failed to execute command: {str(e)}"}
 
 if __name__ == "__main__":
-  # Read the JSON input from stdin
-  try:
-    input_json = json.load(sys.stdin)
-    command_to_run = input_json.get("command")
-    if command_to_run:
-      result = ssh(command_to_run)
-      # Print the result as a JSON object to stdout
-      json.dump(result, sys.stdout)
-    else:
-      json.dump({"error": "No command provided in the JSON input."}, sys.stdout)
-  except json.JSONDecodeError:
-    # Fallback for direct testing
-    if len(sys.argv) > 1:
-      command_to_run = " ".join(sys.argv[1:])
-      result = ssh(command_to_run)
-      print(json.dumps(result))
-    else:
-      print(json.dumps({"error": "Usage: python ssh_tool.py <ssh_command> or pipe JSON with a 'command' key."}))
+    try:
+        input_data = json.load(sys.stdin)
+        tool_name = input_data.get("tool_name")
+        params = input_data.get("parameters", {})
+
+        if tool_name == "ssh":
+            ssh_args = params.get("args")
+            if not ssh_args:
+                raise ValueError("No args provided for SSH command.")
+            result = execute_ssh_command(ssh_args)
+        else:
+            result = {"error": f"Unknown or unsupported tool: {tool_name}"}
+
+    except Exception as e:
+        result = {"error": str(e)}
+
+    print(json.dumps(result))
