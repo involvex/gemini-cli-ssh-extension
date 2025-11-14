@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import shlex
+import json
 
 def ssh(command):
   """Executes an SSH command."""
@@ -20,16 +21,27 @@ def ssh(command):
     )
     stdout, stderr = process.communicate()
     if process.returncode != 0:
-      return f"Error: {stderr}"
-    return stdout
+      return {"error": stderr}
+    return {"output": stdout}
   except Exception as e:
-    return f"An error occurred: {e}"
+    return {"error": f"An error occurred: {e}"}
 
 if __name__ == "__main__":
-  # This allows running the script directly for testing.
-  if len(sys.argv) > 1:
-    command_to_run = " ".join(sys.argv[1:])
-    result = ssh(command_to_run)
-    print(result)
-  else:
-    print("Usage: python ssh_tool.py <ssh_command>")
+  # Read the JSON input from stdin
+  try:
+    input_json = json.load(sys.stdin)
+    command_to_run = input_json.get("command")
+    if command_to_run:
+      result = ssh(command_to_run)
+      # Print the result as a JSON object to stdout
+      json.dump(result, sys.stdout)
+    else:
+      json.dump({"error": "No command provided in the JSON input."}, sys.stdout)
+  except json.JSONDecodeError:
+    # Fallback for direct testing
+    if len(sys.argv) > 1:
+      command_to_run = " ".join(sys.argv[1:])
+      result = ssh(command_to_run)
+      print(json.dumps(result))
+    else:
+      print(json.dumps({"error": "Usage: python ssh_tool.py <ssh_command> or pipe JSON with a 'command' key."}))
