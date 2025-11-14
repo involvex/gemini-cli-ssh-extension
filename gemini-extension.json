@@ -1,5 +1,6 @@
 {
   "name": "ssh",
+  "version": "1.0",
   "description": "An extension to run SSH commands.",
   "tools": [
     {
