@@ -1,0 +1,28 @@
+{
+  "name": "ssh",
+  "description": "An extension to run SSH commands.",
+  "tools": [
+    {
+      "local_tool": {
+        "command": ["python", "ssh_tool.py"],
+        "input_type": "JSON"
+      },
+      "function_declarations": [
+        {
+          "name": "ssh",
+          "description": "Executes an SSH command.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "command": {
+                "type": "STRING",
+                "description": "The SSH command to execute."
+              }
+            },
+            "required": ["command"]
+          }
+        }
+      ]
+    }
+  ]
+}
