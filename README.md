@@ -24,10 +24,4 @@ Executes an SSH command.
 
 *   `command` (string, required): The SSH command to execute, including the username and host.
 
-**Example:**
 
-To list the files in the home directory of the user `bitnami` on the host `63.178.255.78`:
-
-```
-ssh(command: "bitnami@63.178.255.78 ls -la")
-```
